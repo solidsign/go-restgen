@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"restgen/commands"
-	"restgen/commands/args"
+	"github.com/solidsign/go-restgen/commands"
+	"github.com/solidsign/go-restgen/commands/args"
 )
 
 func main() {

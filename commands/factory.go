@@ -2,8 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"restgen/commands/args"
-	cleanArchFiber "restgen/templates/cleanarch/fiber"
+	"github.com/solidsign/go-restgen/commands/args"
+	cleanArchFiber "github.com/solidsign/go-restgen/templates/cleanarch/fiber"
 )
 
 func GetExecutor(args args.Args) (ExecuteMethod, error) {

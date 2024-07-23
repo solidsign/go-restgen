@@ -1,8 +1,8 @@
 package fiber
 
 import (
-	"restgen/codegen"
-	"restgen/commands/args"
+	"github.com/solidsign/go-restgen/codegen"
+	"github.com/solidsign/go-restgen/commands/args"
 	"strings"
 )
 
