@@ -14,17 +14,24 @@ type Generator struct {
 
 func New(module, filename string) *Generator {
 	return &Generator{
-		filePath:    module + "/" + filename + ".go",
+		filePath:    filename + ".go",
 		indentCount: 0,
 		body:        "package " + module + "\n\n",
 	}
 }
 
-func (g *Generator) FuncStart(name string, args ...string) *Generator {
+func (g *Generator) FuncVoidStart(name string, args ...string) *Generator {
 	g.body += g.indent() + "func " + name + "(" + strings.Join(args, ", ") + ") {\n"
 	g.indentCount++
 	return g
 }
+
+func (g *Generator) FuncStart(name string, returns string, args ...string) *Generator {
+	g.body += g.indent() + "func " + name + "(" + strings.Join(args, ", ") + ") " + returns + " {\n"
+	g.indentCount++
+	return g
+}
+
 func (g *Generator) FuncEnd() *Generator {
 	g.indentCount--
 	g.body += g.indent() + "}\n" + "\n"
@@ -57,6 +64,21 @@ func (g *Generator) Struct(name string, fields ...string) *Generator {
 	g.indentCount++
 	for i, field := range fields {
 		if i < len(fields)-1 {
+			g.body += g.indent() + field + "\n"
+		} else {
+			g.body += g.indent() + field + "," + "\n"
+		}
+	}
+	g.indentCount--
+	g.body += g.indent() + "}" + "\n"
+	return g
+}
+
+func (g *Generator) Interface(name string, methods ...string) *Generator {
+	g.body += g.indent() + "type " + name + " interface {\n"
+	g.indentCount++
+	for i, field := range methods {
+		if i < len(methods)-1 {
 			g.body += g.indent() + field + "\n"
 		} else {
 			g.body += g.indent() + field + "," + "\n"
