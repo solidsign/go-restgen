@@ -47,14 +47,26 @@ func generateController(args args.Args) error {
 		Import("github.com/gofiber/fiber/v2", args.ProjectName+"/api/"+args.Group+"/protocol").
 		Struct(args.EndpointName+"Controller").
 		FuncStart("Handle", "error", "ctx *fiber.Ctx").
-		AppendLine("return ctx.JSON(protocol." + args.Group + capitalizeFirstLetter(args.EndpointName) + "Response{})").
+		AppendLine("panic(\"Not implemented\")").
 		FuncEnd().
 		Write()
 }
 
 func generateUseCase(args args.Args) error {
-	return codegen.New("usecase", "api/"+args.Group+"/usecase/"+args.EndpointName).
-		Interface(args.EndpointName + "GenerateUseCase").
-		Struct(args.EndpointName + "GenerateUseCase").
+	err := codegen.New("usecase", "api/"+args.Group+"/usecase/"+args.EndpointName).
+		Interface(capitalizeFirstLetter(args.EndpointName) + "UseCase").
+		Struct(args.EndpointName + "UseCaseImpl").
+		Write()
+
+	if err != nil {
+		return err
+	}
+
+	return codegen.New("usecase", "api/"+args.Group+"/usecase/test_"+args.EndpointName).
+		Import("github.com/stretchr/testify/assert", "testing").
+		Struct(args.EndpointName+"UseCaseTest").
+		FuncVoidStart("Test"+capitalizeFirstLetter(args.EndpointName), "t *testing.T").
+		AppendLine("panic(\"not implemented\")").
+		FuncEnd().
 		Write()
 }
