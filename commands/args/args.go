@@ -1,6 +1,7 @@
 package args
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"slices"
@@ -17,18 +18,7 @@ type Args struct {
 	GenerateUseCase bool
 	Architecture    string
 	Framework       string
-	ProjectName     string
-}
-
-func getProjectName() string {
-	dir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	dir = strings.ReplaceAll(dir, "\\", "/")
-	dir = strings.TrimSuffix(dir, "/")
-	splitted := strings.Split(dir, "/")
-	return splitted[len(splitted)-1]
+	ModuleName      string
 }
 
 func ParseCmdArgs() (Args, error) {
@@ -39,7 +29,6 @@ func ParseCmdArgs() (Args, error) {
 		GenerateUseCase: true,
 		Architecture:    "cleanarch",
 		Framework:       "fiber",
-		ProjectName:     getProjectName(),
 	}
 	for i, arg := range args {
 		if i == 0 {
@@ -65,6 +54,8 @@ func ParseCmdArgs() (Args, error) {
 			res.Architecture = args[i+1]
 		case "--framework":
 			res.Framework = args[i+1]
+		case "--module-name":
+			res.ModuleName = args[i+1]
 		default:
 			switch i {
 			case 1:
@@ -80,6 +71,7 @@ func ParseCmdArgs() (Args, error) {
 	}
 
 	res = fillGroupAndEndpoint(res)
+	res = fillModuleName(res)
 
 	return res, validateArgs(res)
 }
@@ -97,6 +89,35 @@ func fillGroupAndEndpoint(args Args) Args {
 		args.Group = "unnamed"
 	}
 
+	return args
+}
+
+func fillModuleName(args Args) Args {
+	if args.ModuleName != "" {
+		return args
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return args
+	}
+
+	file, err := os.OpenFile(dir+"/go.mod", os.O_RDONLY, 0644)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return args
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		text := scanner.Text()
+		if strings.Contains(text, "module") {
+			args.ModuleName = strings.TrimPrefix(text, "module ")
+			return args
+		}
+	}
 	return args
 }
 

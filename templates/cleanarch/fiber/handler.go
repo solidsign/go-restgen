@@ -44,7 +44,7 @@ func generateRouteInit(args args.Args) error {
 
 func generateController(args args.Args) error {
 	return codegen.New("controller", "api/"+args.Group+"/controller/"+args.EndpointName).
-		Import("github.com/gofiber/fiber/v2", args.ProjectName+"/api/"+args.Group+"/protocol").
+		Import("github.com/gofiber/fiber/v2", args.ModuleName+"/api/"+args.Group+"/protocol").
 		Struct(args.EndpointName+"Controller").
 		FuncStart("Handle", "error", "ctx *fiber.Ctx").
 		AppendLine("panic(\"Not implemented\")").
