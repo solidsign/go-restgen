@@ -1,6 +1,10 @@
 package codegen
 
-import "strings"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+)
 
 type Generator struct {
 	filePath    string
@@ -8,8 +12,12 @@ type Generator struct {
 	body        string
 }
 
-func New() *Generator {
-	return &Generator{}
+func New(module, filename string) *Generator {
+	return &Generator{
+		filePath:    module + "/" + filename + ".go",
+		indentCount: 0,
+		body:        "package " + module + "\n\n",
+	}
 }
 
 func (g *Generator) FuncStart(name string, args ...string) *Generator {
@@ -19,7 +27,7 @@ func (g *Generator) FuncStart(name string, args ...string) *Generator {
 }
 func (g *Generator) FuncEnd() *Generator {
 	g.indentCount--
-	g.body += g.indent() + "}\n"
+	g.body += g.indent() + "}\n" + "\n"
 	return g
 }
 
@@ -33,19 +41,14 @@ func (g *Generator) Append(str string) *Generator {
 	return g
 }
 
-func (g *Generator) Module(name string) *Generator {
-	g.body += "module " + name
-	return g
-}
-
 func (g *Generator) Import(imports ...string) *Generator {
 	g.body += g.indent() + "import (\n"
 	g.indentCount++
 	for _, imp := range imports {
-		g.body += g.indent() + imp + "\n"
+		g.body += g.indent() + "\"" + imp + "\"" + "\n"
 	}
 	g.indentCount--
-	g.body += g.indent() + ")"
+	g.body += g.indent() + ")" + "\n\n"
 	return g
 }
 
@@ -60,10 +63,27 @@ func (g *Generator) Struct(name string, fields ...string) *Generator {
 		}
 	}
 	g.indentCount--
-	g.body += g.indent() + "}"
+	g.body += g.indent() + "}" + "\n"
 	return g
 }
 
 func (g *Generator) indent() string {
 	return strings.Repeat("\t", g.indentCount)
+}
+
+func (g *Generator) Write() error {
+	err := os.MkdirAll(filepath.Dir(g.filePath), 0755)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(g.filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(g.body)
+
+	return err
 }
