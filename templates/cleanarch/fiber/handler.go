@@ -3,7 +3,8 @@ package fiber
 import (
 	"github.com/solidsign/go-restgen/codegen"
 	"github.com/solidsign/go-restgen/commands/args"
-	"strings"
+	"github.com/solidsign/go-restgen/templates/swagger"
+	"github.com/solidsign/go-restgen/utils"
 )
 
 func Execute(args args.Args) error {
@@ -24,20 +25,33 @@ func Execute(args args.Args) error {
 	return nil
 }
 
-func capitalizeFirstLetter(str string) string {
-	return strings.ToUpper(string(str[0])) + str[1:]
-}
-
 func generateProtocolStructs(args args.Args) error {
 	return codegen.New("protocol", "api/"+args.Group+"/protocol/"+args.EndpointName).
-		Struct(capitalizeFirstLetter(args.Group) + capitalizeFirstLetter(args.EndpointName) + "Request").
-		Struct(capitalizeFirstLetter(args.Group) + capitalizeFirstLetter(args.EndpointName) + "Response").
+		Struct(utils.CapitalizeFirstLetter(args.Group) + utils.CapitalizeFirstLetter(args.EndpointName) + "Request").
+		Struct(utils.CapitalizeFirstLetter(args.Group) + utils.CapitalizeFirstLetter(args.EndpointName) + "Response").
 		Write()
 }
 
 func generateRouteInit(args args.Args) error {
+	annotationString := ""
+	if args.GenerateSwagger {
+		annotationString = swagger.CreateAnnotationComments(swagger.RouteAnnotation{
+			Summary:      args.Group + " " + args.EndpointName,
+			Description:  "",
+			Tags:         []string{args.Group},
+			Produce:      "json",
+			Secured:      args.Secured,
+			Method:       args.Method,
+			Url:          args.Url,
+			EndpointName: args.EndpointName,
+			Group:        args.Group,
+			HasInput:     true,
+		})
+	}
+
 	return codegen.New("routes", "api/"+args.Group+"/routes/"+args.EndpointName).
-		FuncVoidStart("Init" + capitalizeFirstLetter(args.Group) + capitalizeFirstLetter(args.EndpointName)).
+		Append(annotationString).
+		FuncVoidStart("Init" + utils.CapitalizeFirstLetter(args.Group) + utils.CapitalizeFirstLetter(args.EndpointName)).
 		FuncEnd().
 		Write()
 }
@@ -54,7 +68,7 @@ func generateController(args args.Args) error {
 
 func generateUseCase(args args.Args) error {
 	err := codegen.New("usecase", "api/"+args.Group+"/usecase/"+args.EndpointName).
-		Interface(capitalizeFirstLetter(args.EndpointName) + "UseCase").
+		Interface(utils.CapitalizeFirstLetter(args.EndpointName) + "UseCase").
 		Struct(args.EndpointName + "UseCaseImpl").
 		Write()
 
@@ -65,7 +79,7 @@ func generateUseCase(args args.Args) error {
 	return codegen.New("usecase", "api/"+args.Group+"/usecase/test_"+args.EndpointName).
 		Import("github.com/stretchr/testify/assert", "testing").
 		Struct(args.EndpointName+"UseCaseTest").
-		FuncVoidStart("Test"+capitalizeFirstLetter(args.EndpointName), "t *testing.T").
+		FuncVoidStart("Test"+utils.CapitalizeFirstLetter(args.EndpointName), "t *testing.T").
 		AppendLine("panic(\"not implemented\")").
 		FuncEnd().
 		Write()
