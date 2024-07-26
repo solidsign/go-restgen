@@ -1,6 +1,7 @@
 package fiber
 
 import (
+	"fmt"
 	"github.com/solidsign/go-restgen/codegen"
 	"github.com/solidsign/go-restgen/commands/args"
 	"github.com/solidsign/go-restgen/templates/swagger"
@@ -58,9 +59,13 @@ func generateRouteInit(args args.Args) error {
 
 func generateController(args args.Args) error {
 	return codegen.New("controller", "api/"+args.Group+"/controller/"+args.EndpointName).
-		Import("github.com/gofiber/fiber/v2", args.ModuleName+"/api/"+args.Group+"/protocol").
+		Import("github.com/gofiber/fiber/v2", args.ModuleName+"/api/"+args.Group+"/protocol", "net/http").
 		Struct(args.EndpointName+"Controller").
 		FuncStart("Handle", "error", "ctx *fiber.Ctx").
+		AppendLine(fmt.Sprintf("request := new(protocol.%sRequest)", utils.CapitalizeFirstLetter(args.Group)+utils.CapitalizeFirstLetter(args.EndpointName))).
+		AppendLine("if err := ctx.BodyParser(request); err != nil {").
+		AppendLine("\treturn ctx.Status(http.StatusBadRequest).JSON(protocol.ErrorResponse{Message: \"can't parse request json\"})").
+		AppendLine("}").
 		AppendLine("panic(\"Not implemented\")").
 		FuncEnd().
 		Write()
